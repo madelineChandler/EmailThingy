@@ -4,7 +4,7 @@
  * Purpose: Tests the GUI (without the model)
  */
 
-import tabular.MainFrame;
+import gui.*;
 
 public class GuiDemo {
     public static void main(String[] args) {

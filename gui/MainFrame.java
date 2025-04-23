@@ -1,4 +1,4 @@
-package tabular;
+package gui;
 /*
  * Author: Madeline Chandler
  * Date: 4/22/2025
