@@ -13,12 +13,12 @@ import gui.*;
 public class ModelDemo {
     public static void main(String[] args) {
       MainFrame frame = new MainFrame();
-      frame.initialize(); // initializes gui
-
-      System.out.print("Enter file name: ");
-        String fileName = "spam_or_not_spam.csv";
-        DataSet ds = new DataSet(fileName);
-        LinearModel lm = new LinearModel(0.005,ds);
+      // frame.initialize(); // initializes gui
+      
+      String fileName = "spam_or_not_spam.csv";
+      DataSet ds = new DataSet(fileName);
+      LinearModel lm = new LinearModel(0.005, ds);
+      
       System.out.println("Trained Model: " + lm);
       System.out.println("Model Error: " + lm.sumSquaredError());
       ArrayList<DataRow> rows = ds.getRows();
