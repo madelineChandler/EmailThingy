@@ -17,10 +17,9 @@ public class ModelDemo {
       
       String fileName = "spam_or_not_spam.csv";
       DataSet ds = new DataSet(fileName);
-      LinearModel lm = new LinearModel(0.005, ds);
       
-      System.out.println("Trained Model: " + lm);
-      System.out.println("Model Error: " + lm.sumSquaredError());
+      System.out.println("Trained Model: ");
+      System.out.println("Model Error: ");
       ArrayList<DataRow> rows = ds.getRows();
       if(rows == null) {
           System.out.println("Data Set has no rows. stopping!");
@@ -28,12 +27,11 @@ public class ModelDemo {
       }
       System.out.println("prediction, actual, error");
       for(DataRow row : rows) {
-        double predict = lm.predict(row.getIndependentVariables());
-        System.out.print(predict);
+        System.out.println("");
         System.out.print(",");
         System.out.print(row.getDependentVariable());
         System.out.print(",");
-        System.out.println(predict - row.getDependentVariable());
+        System.out.println(row.getDependentVariable());
       }
     }
 }
