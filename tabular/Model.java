@@ -14,7 +14,7 @@ public class Model {
     private DataSet dataSet;
     private ArrayList<DataRow> trainingData;
     private ArrayList<DataRow> testingData;
-    private ArrayList<Node> modelTree = new ArrayList<>(); // tree of conditional nodes (for predicting)
+    private Node headNode = new Node(); // head node for classification tree
 
     // initialize the model object
     public Model(DataSet ds) {
@@ -29,38 +29,29 @@ public class Model {
      */
     public void trainModel() {
         // Process training emails and categorize into ham or spam
-        for (DataRow row : trainingData) {
+        for (DataRow row : this.trainingData) {
             if (row.getLabel().equalsIgnoreCase("spam")) {
                 spam.processEmail(row.getEmail());
             } else {
-                ham.processEmail(row.getEmail());
+                ham.processEmail(row.getEmail());        
             }
-        }
-
-        // Extract all words to update top words
-        List<String> hamWords = new ArrayList<>();
-        List<String> spamWords = new ArrayList<>();
-
-        for (DataRow row : trainingData) {
-            String[] words = row.getEmail().split("\\s+");
-            if (row.getLabel().equalsIgnoreCase("spam")) {
-                spamWords.addAll(Arrays.asList(words));
-            } else {
-                hamWords.addAll(Arrays.asList(words));
-            }
-        }
-
-        spam.updateWordList(spamWords);
-        ham.updateWordList(hamWords);
-
-       
+        }       
         
+        /* TODO: implement gini impurity to determine order to create modelTree */
+        ArrayList<Integer> allLengths = spam.getAllLengths();
+        ArrayList<Double> impurities = new ArrayList<Double>(allLengths.size()-1);
+
+        for (int i = 1; i < spam.getEmailCount(); i++) {
+            int avgLength = (allLengths.get(i-1) + allLengths.get(i)) / 2;
+            impurities.add(giniImpurity(avgLength, spam));
+        }
     }
 
     /* makes predictions with the rest of the known data 
      */
-    public int predict() {
+    public double predict() {
         int correct = 0;
+        int totalPredicted = 0;
 
         for (DataRow row : testingData) {
             
@@ -75,9 +66,10 @@ public class Model {
             if (prediction.equalsIgnoreCase(row.getLabel())) {
                 correct++;
             }
+            totalPredicted++;
         }
 
-        return correct;
+        return (double) correct / (double) totalPredicted;
     }
 
     // Make a prediction using a new email input 
@@ -92,8 +84,9 @@ public class Model {
     }
 
     
-    private double giniImpurity() {
+    private double giniImpurity(double property, FeatureProcessor processor) {
         // TODO:Maddie
+
         return 0.0;
     }
 }

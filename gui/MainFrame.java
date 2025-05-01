@@ -42,7 +42,7 @@ public class MainFrame extends JFrame {
     JButton btnRUN =  new JButton("Run");
     btnRUN.setFont(mainFont);
     btnRUN.addActionListener(new ActionListener() {
-
+        // changes text when RUN button is pressed
         @Override
         public void actionPerformed(ActionEvent e) {
             test.setText("WAHOO! Button works :)  input = " + inputTest.getText());

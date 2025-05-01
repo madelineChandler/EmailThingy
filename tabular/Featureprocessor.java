@@ -14,6 +14,7 @@ public class FeatureProcessor {
     private int emailCount;                             // Number of emails processed
     private int totalWordLength;                        // Sum of word lengths (excluding ignored)
     private Set<String> ignoreWords;                    // Set of words to ignore (e.g., stop words)
+    private ArrayList<Integer> allLengths = new ArrayList<Integer>();
 
     // Constructor
     public FeatureProcessor() {
@@ -42,7 +43,7 @@ public class FeatureProcessor {
 
     // Process an email: count words and update total word length (excluding ignored words)
     public void processEmail(String emailContent) {
-        String[] words = emailContent.split("\\s+");
+        String[] words = emailContent.split("\\s+"); // split each word by spaces
         int wordLengthSum = 0;
 
         for (String word : words) {
@@ -52,8 +53,13 @@ public class FeatureProcessor {
             }
         }
 
+        // Extract all words to update top words
+        this.updateWordList(Arrays.asList(words));
+
         emailCount++;
         totalWordLength += wordLengthSum;
+        allLengths.add(wordLengthSum); // adds to list of all emails lengths 
+        Collections.sort(allLengths);
     }
 
     // Calculate average word length across all processed emails
@@ -95,8 +101,13 @@ public class FeatureProcessor {
         return emailCount;
     }
 
+    public ArrayList<Integer> getAllLengths() {
+        return allLengths;
+    }
+}
+
     // Main method for testing
-    public static void main(String[] args) {
+    /* public static void main(String[] args) {
         FeatureProcessor processor = new FeatureProcessor();
 
         // Simulate a list of words from multiple emails
@@ -114,5 +125,4 @@ public class FeatureProcessor {
 
         System.out.println("Email Count: " + processor.getEmailCount());
         System.out.printf("Average Word Length (ignoring stop words): %.2f\n", processor.getAverageWordLength());
-    }
-}
+    } */

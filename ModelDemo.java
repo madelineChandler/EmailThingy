@@ -12,7 +12,7 @@ import gui.*;
 
 public class ModelDemo {
     public static void main(String[] args) {
-      MainFrame frame = new MainFrame();
+      // MainFrame frame = new MainFrame();
       // frame.initialize(); // initializes gui
       
       String fileName = "spam_or_not_spam.csv";

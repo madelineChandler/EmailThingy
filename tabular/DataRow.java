@@ -15,23 +15,27 @@ public class DataRow {
      * @param y the dependent variable
      * @param x the array of independent variables
      */
-    public DataRow(String y, double x)
+    public DataRow(String y, int x)
     {
         this.y = y;
         this.x = x;
     }
 
     /**
-     * @return the dependent variable
+     * @return the email
      */
-    public double getDependentVariable() {
+    public String getEmail() {
         return y;
     }
 
     /**
-     * @return the array of independent variables
+     * @return whether email is ham or spam
      */
-    public double getIndependentVariable() {
-        return x;
+    public String getLabel() {
+        if (x == 0) 
+            return "ham";
+        return "spam";
     }
+
+
 }

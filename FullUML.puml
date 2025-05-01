@@ -15,7 +15,7 @@ class DataSet {
     +ArrayList<DataRow> getRows()
 }
 
-class FeatureProcessor {
+class gui.FeatureProcessor {
     -top_ten : String[]
     -emailCount : int
     -totalWordLength : int
@@ -23,8 +23,8 @@ class FeatureProcessor {
 }
 
 class Model {
-    -ham : FeatureProcessor
-    -spam : FeatureProcessor
+    -ham : gui.FeatureProcessor
+    -spam : gui.FeatureProcessor
     -trainingData : DataSet
 }
 

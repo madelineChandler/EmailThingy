@@ -44,7 +44,7 @@ public class DataSet {
     
     private void split() {
       for (int i = 0; i < data.size(); i++) {
-         if (i <= ds.size()*.8) {
+         if (i <= data.size()*.8) {
             // 80% of data to train
             this.toTrain.add(data.get(i));
          } else {

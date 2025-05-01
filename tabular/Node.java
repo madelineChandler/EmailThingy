@@ -14,6 +14,13 @@ public class Node {
     private Node left;
     private Node right;
 
+    public Node() {
+        this.feature = null;
+        this.threshold = 0.0;
+        this.left = null;
+        this.right = null;
+    }
+
     public Node(String feature, double threshold) {
         this.feature = feature;
         this.threshold = threshold;
@@ -33,12 +40,17 @@ public class Node {
         return left;
     }
 
-    public void setLeft(Node left) {
-        this.left = left;
-    }
-
     public Node getRight() {
         return right;
+    }
+
+    /* @return true if node is empty - meaning it is the final (decision) node */
+    public boolean isLeaf() {
+        return (left==null && right==null);
+    }
+
+    public void setLeft(Node left) {
+        this.left = left;
     }
 
     public void setRight(Node right) {
