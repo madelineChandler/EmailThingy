@@ -11,7 +11,7 @@ public class FeatureProcessor {
         this.totalWordLength = 0;
     }
 
-     updating the top ten spam indicator words
+    // Updating the top ten spam indicator words
     public void updateWordList(List<String> allWords) {
         // Simulate scoring or frequency-based word picking (e.g., top 10 frequent words)
         Map<String, Integer> frequencyMap = new HashMap<>();
@@ -46,9 +46,9 @@ public class FeatureProcessor {
     }
 
     // Returns avg word length across all emails
-    public int getAverageWordLength() {
+    public double getAverageWordLength() {
         if (emailCount == 0) return 0;
-        return totalWordLength / emailCount;
+        return (double) totalWordLength / emailCount;
     }
 
     // Getter for topTen
