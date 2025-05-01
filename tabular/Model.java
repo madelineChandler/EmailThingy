@@ -5,54 +5,95 @@ package tabular;
  * Purpose:
  */
 
-import java.util.ArrayList;
+import java.util.*;
 
 public class Model {   
-   private FeatureProcessor ham = new FeatureProcessor();
-   private FeatureProcessor spam = new FeatureProcessor();
+    private FeatureProcessor ham = new FeatureProcessor();
+    private FeatureProcessor spam = new FeatureProcessor();
 
-   private DataSet dataSet;
-   private ArrayList<DataRow> trainingData;
-   private ArrayList<DataRow> testingData;
-   private ArrayList<Node> modelTree = new ArrayList<Node>(); // tree of conditional nodes (for predicting)
-   
-   /* initialize the model object */
-   public Model(DataSet ds) {
-      this.dataSet = ds;
-      this.trainingData = ds.getTrainingData();
-      this.testingData = ds.getTestingData();
+    private DataSet dataSet;
+    private ArrayList<DataRow> trainingData;
+    private ArrayList<DataRow> testingData;
+    private ArrayList<Node> modelTree = new ArrayList<>(); // tree of conditional nodes (for predicting)
+
+    // initialize the model object
+    public Model(DataSet ds) {
+        this.dataSet = ds;
+        this.trainingData = ds.getTrainingData();
+        this.testingData = ds.getTestingData();
     }
-    
+
     /* Trains model
-     * equate the gini impurity and test it against all the properties in
+     * Equate the gini impurity and test it against all the properties in
      * respective feature processor (ham or spam)
      */
     public void trainModel() {
-      /* TODO: implement (you can just call giniImpurity() for now bc its just math;
-          i'll fix up giniImpurity() later).
-           ngl i'm hella eepy but if you need specification just look up gini impurity and decision trees.
-           you can also ask me tomorrow for clarification if you want.
-            I really like these videos: "https://www.youtube.com/watch?v=_L39rN6gz7Y" & "https://www.youtube.com/watch?v=ZVR2Way4nwQ"*/
+        // Process training emails and categorize into ham or spam
+        for (DataRow row : trainingData) {
+            if (row.getLabel().equalsIgnoreCase("spam")) {
+                spam.processEmail(row.getEmail());
+            } else {
+                ham.processEmail(row.getEmail());
+            }
+        }
+
+        // Extract all words to update top words
+        List<String> hamWords = new ArrayList<>();
+        List<String> spamWords = new ArrayList<>();
+
+        for (DataRow row : trainingData) {
+            String[] words = row.getEmail().split("\\s+");
+            if (row.getLabel().equalsIgnoreCase("spam")) {
+                spamWords.addAll(Arrays.asList(words));
+            } else {
+                hamWords.addAll(Arrays.asList(words));
+            }
+        }
+
+        spam.updateWordList(spamWords);
+        ham.updateWordList(hamWords);
+
+       
+        
     }
-    
-    /* makes predictions with the rest of the known data (testingData)
-     * returns its accuracy 
+
+    /* makes predictions with the rest of the known data 
      */
     public int predict() {
-        /* TODO: implement using modelTree */
-        return 0;
+        int correct = 0;
+
+        for (DataRow row : testingData) {
+            
+            double avgLength = row.getEmail().split("\\s+").length == 0 ? 0 :
+                Arrays.stream(row.getEmail().split("\\s+")).mapToInt(String::length).average().orElse(0);
+
+            double spamAvg = spam.getAverageWordLength();
+            double hamAvg = ham.getAverageWordLength();
+
+            String prediction = Math.abs(avgLength - spamAvg) < Math.abs(avgLength - hamAvg) ? "spam" : "ham";
+
+            if (prediction.equalsIgnoreCase(row.getLabel())) {
+                correct++;
+            }
+        }
+
+        return correct;
     }
-    
-    // make a prediction using a new email input (for funsies)
+
+    // Make a prediction using a new email input 
     public int predict(String email) {
-        /* TODO: implement (LOW PRIORITY) */
-        return 0;
+        double avgLength = email.split("\\s+").length == 0 ? 0 :
+            Arrays.stream(email.split("\\s+")).mapToInt(String::length).average().orElse(0);
+
+        double spamAvg = spam.getAverageWordLength();
+        double hamAvg = ham.getAverageWordLength();
+
+        return Math.abs(avgLength - spamAvg) < Math.abs(avgLength - hamAvg) ? 1 : 0; // 1 = spam, 0 = ham
     }
+
     
-    /* @param
-     */
     private double giniImpurity() {
-        /* TODO: implement (Maddie can do this later)*/
+        // TODO:Maddie
         return 0.0;
     }
 }
