@@ -1,25 +1,78 @@
+/*
+ * Author: Madeline Chanlder and Shelby Dussintyl
+ * Date:4/30/25
+ * Purpose: Processes emails to compute average word length and identify top ten frequent (non-ignored) words.
+ */
+
+package tabular;
+
 import java.util.*;
 
 public class FeatureProcessor {
 
-    private String[] topTen = new String[10];
-    private int emailCount;
-    private int totalWordLength;
+    private String[] topTen = new String[10];           // Top 10 frequent words
+    private int emailCount;                             // Number of emails processed
+    private int totalWordLength;                        // Sum of word lengths (excluding ignored)
+    private Set<String> ignoreWords;                    // Set of words to ignore (e.g., stop words)
 
+    // Constructor
     public FeatureProcessor() {
         this.emailCount = 0;
         this.totalWordLength = 0;
+        this.ignoreWords = new HashSet<>(Arrays.asList(
+            "the", "a", "an", "and", "or", "but", "is", "are", "was", "were",
+            "in", "on", "at", "to", "for", "with", "of", "by"
+        ));
     }
 
-    // Updating the top ten spam indicator words
-    public void updateWordList(List<String> allWords) {
-        // Simulate scoring or frequency-based word picking (e.g., top 10 frequent words)
-        Map<String, Integer> frequencyMap = new HashMap<>();
-        for (String word : allWords) {
-            frequencyMap.put(word, frequencyMap.getOrDefault(word, 0) + 1);
+    // Add a word to the ignore list
+    public void addIgnoreWord(String word) {
+        ignoreWords.add(word.toLowerCase());
+    }
+
+    // Remove a word from the ignore list
+    public void removeIgnoreWord(String word) {
+        ignoreWords.remove(word.toLowerCase());
+    }
+
+    // Get current ignore list
+    public Set<String> getIgnoreWords() {
+        return ignoreWords;
+    }
+
+    // Process an email: count words and update total word length (excluding ignored words)
+    public void processEmail(String emailContent) {
+        String[] words = emailContent.split("\\s+");
+        int wordLengthSum = 0;
+
+        for (String word : words) {
+            String cleanedWord = word.toLowerCase().replaceAll("[^a-z]", "");
+            if (!ignoreWords.contains(cleanedWord) && !cleanedWord.isEmpty()) {
+                wordLengthSum += cleanedWord.length();
+            }
         }
 
-        // Get top 10 words by frequency
+        emailCount++;
+        totalWordLength += wordLengthSum;
+    }
+
+    // Calculate average word length across all processed emails
+    public double getAverageWordLength() {
+        if (emailCount == 0) return 0.0;
+        return (double) totalWordLength / emailCount;
+    }
+
+    // Update the top ten frequent words based on a list of all words from emails
+    public void updateWordList(List<String> allWords) {
+        Map<String, Integer> frequencyMap = new HashMap<>();
+
+        for (String word : allWords) {
+            String cleanedWord = word.toLowerCase().replaceAll("[^a-z]", "");
+            if (!ignoreWords.contains(cleanedWord) && !cleanedWord.isEmpty()) {
+                frequencyMap.put(cleanedWord, frequencyMap.getOrDefault(cleanedWord, 0) + 1);
+            }
+        }
+
         List<Map.Entry<String, Integer>> sorted = new ArrayList<>(frequencyMap.entrySet());
         sorted.sort((a, b) -> b.getValue() - a.getValue());
 
@@ -27,37 +80,39 @@ public class FeatureProcessor {
             topTen[i] = sorted.get(i).getKey();
         }
 
-        // Fill remaining slots with null if less than 10 words
         for (int i = sorted.size(); i < 10; i++) {
             topTen[i] = null;
         }
     }
 
-    // Adds a new email and updates internal stats
-    public void processEmail(String emailContent) {
-        String[] words = emailContent.split("\\s+");
-        int wordLengthSum = 0;
-        for (String word : words) {
-            wordLengthSum += word.length();
-        }
-
-        emailCount++;
-        totalWordLength += wordLengthSum;
-    }
-
-    // Returns avg word length across all emails
-    public double getAverageWordLength() {
-        if (emailCount == 0) return 0;
-        return (double) totalWordLength / emailCount;
-    }
-
-    // Getter for topTen
+    // Get top 10 frequent words
     public String[] getTopTen() {
         return topTen;
     }
 
-    // Getter for emailCount
+    // Get total number of emails processed
     public int getEmailCount() {
         return emailCount;
+    }
+
+    // Main method for testing
+    public static void main(String[] args) {
+        FeatureProcessor processor = new FeatureProcessor();
+
+        // Simulate a list of words from multiple emails
+        List<String> words = Arrays.asList(
+            "the", "and", "spam", "filter", "the", "spam", "indicator", "words",
+            "email", "process", "email", "filter", "alert", "urgent", "prize"
+        );
+        processor.updateWordList(words);
+
+        System.out.println("Top Ten Words (ignoring common words): " + Arrays.toString(processor.getTopTen()));
+
+        // Process a sample email
+        processor.processEmail("This is a test email for the spam filter process. Claim your prize now!");
+        processor.processEmail("An urgent alert: you've won a prize in our email sweepstakes!");
+
+        System.out.println("Email Count: " + processor.getEmailCount());
+        System.out.printf("Average Word Length (ignoring stop words): %.2f\n", processor.getAverageWordLength());
     }
 }
