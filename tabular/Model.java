@@ -7,7 +7,7 @@ package tabular;
 
 import java.util.*;
 
-public class Model {   
+public class Model {
     private FeatureProcessor ham = new FeatureProcessor();
     private FeatureProcessor spam = new FeatureProcessor();
 
@@ -45,10 +45,6 @@ public class Model {
         return daNode;
     }
 
-    /* Trains model
-     * Equate the gini impurity and test it against all the properties in
-     * respective feature processor (ham or spam)
-     */
     public void trainModel() {
         // Process training emails
         for (DataRow row : this.trainingData) {
@@ -63,54 +59,59 @@ public class Model {
         ArrayList<Integer> allLengths = new ArrayList<>(spam.getAllLengths());
         allLengths.addAll(ham.getAllLengths());
         Collections.sort(allLengths);
-
-        // Calculate impurities for lengths
         Node lengthNode = calculateImpurities("length", allLengths);
 
         // Combine and sort all avg word lengths
-        ArrayList<Integer> allAvgWord = new ArrayList<Integer>(spam.allAvgWordLengths());
+        ArrayList<Integer> allAvgWord = new ArrayList<>(spam.allAvgWordLengths());
         allAvgWord.addAll(ham.allAvgWordLengths());
         Collections.sort(allAvgWord);
-
-        // Calculate impurities for avg word length
         Node awlNode = calculateImpurities("avgWordLength", allAvgWord);
 
-        Node otherNode;
-        // Determine the head node
+        // Determine head node based on lower impurity
         if (lengthNode.getImpurity() < awlNode.getImpurity()) {
             headNode = lengthNode;
-            otherNode = awlNode;
+
+            Node left = new Node();
+            left.setFeature("avgWordLength");
+            left.setThreshold(awlNode.getThreshold());
+            Node leftLeft = new Node();
+            leftLeft.setClassification("ham");
+            Node leftRight = new Node();
+            leftRight.setClassification("spam");
+            left.setLeft(leftLeft);
+            left.setRight(leftRight);
+
+            headNode.setLeft(left);
+
+            Node rightLeaf = new Node();
+            rightLeaf.setClassification("spam");
+            headNode.setRight(rightLeaf);
         } else {
             headNode = awlNode;
-            otherNode = lengthNode;
+
+            Node left = new Node();
+            left.setFeature("length");
+            left.setThreshold(lengthNode.getThreshold());
+            Node leftLeft = new Node();
+            leftLeft.setClassification("ham");
+            Node leftRight = new Node();
+            leftRight.setClassification("spam");
+            left.setLeft(leftLeft);
+            left.setRight(leftRight);
+
+            headNode.setLeft(left);
+
+            Node rightLeaf = new Node();
+            rightLeaf.setClassification("spam");
+            headNode.setRight(rightLeaf);
         }
-         /* Place the other node as a child of the head node
-         * and classify it as spam or ham based on the threshold
-         */
-        /*** TODO: I'm pretty sure this is wrong but I don't know how to fix it ***/
-        Node nullNode = new Node();
-        if (otherNode.getThreshold() < headNode.getThreshold()) {
-            headNode.setLeft(otherNode); // Left (true) child
-            otherNode.setClassification("ham");
-            headNode.setRight(nullNode);
-            nullNode.setClassification("spam");
-        } else {
-            headNode.setRight(otherNode); // Right (false) child
-            otherNode.setClassification("spam");
-            headNode.setLeft(nullNode);
-            nullNode.setClassification("ham");
-        }
-        /******************************************/
     }
 
-    /* makes predictions with the rest of the known data 
-     */
     public double predict() {
         int correct = 0;
         int totalPredicted = 0;
 
         for (DataRow row : testingData) {
-
             int prediction = predict(row.getEmail());
 
             if (prediction == (row.getX())) {
@@ -122,7 +123,6 @@ public class Model {
         return (double) correct / (double) totalPredicted;
     }
 
-    // Make a prediction using a new email input 
     public int predict(String email) {
         Node currentNode = headNode;
         String classification;
@@ -143,62 +143,48 @@ public class Model {
                 }
             }
         }
-        classification = currentNode.getClassification();
 
-        if (classification.equals("spam")) {
-            return 1;
-        } else {
-            return 0;
-        }
+        classification = currentNode.getClassification();
+        return classification.equals("spam") ? 1 : 0;
     }
 
-    
     private double giniImpurity(double val, String property) {
-        int spamYes = 0;
-        int spamNo = 0;
-        int hamYes = 0;
-        int hamNo = 0;
-        double totalImpurity = 0.0;
-        ArrayList<Integer> spamPoo;
-        ArrayList<Integer> hamPoo;
+        int spamYes = 0, spamNo = 0, hamYes = 0, hamNo = 0;
+        double totalImpurity;
 
-        if (property.equals("length")) {
-            spamPoo = spam.getAllLengths();
-            hamPoo = ham.getAllLengths();
-        }
-        else {
-            spamPoo = spam.allAvgWordLengths();
-            hamPoo = ham.allAvgWordLengths();
-        }
+        ArrayList<Integer> spamPoo = property.equals("length") ? spam.getAllLengths() : spam.allAvgWordLengths();
+        ArrayList<Integer> hamPoo = property.equals("length") ? ham.getAllLengths() : ham.allAvgWordLengths();
+
         for (int i : spamPoo) {
-            if (i < val) {
-                spamYes++;
-            } else {
-                spamNo++;
-            }
+            if (i < val) spamYes++;
+            else spamNo++;
         }
+
         for (int i : hamPoo) {
-            if (i < val) {
-                hamYes++;
-            } else {
-                hamNo++;
-            }
+            if (i < val) hamYes++;
+            else hamNo++;
         }
 
-        double yesProb = ((double) spamYes / (double) (spamYes + spamNo));
-        double noProb = ((double) spamNo / (double) (spamYes + spamNo));
-        double spamGini = 1 - (yesProb * yesProb) - (noProb * noProb);
+        int totalYes = spamYes + hamYes;
+        int totalNo = spamNo + hamNo;
 
-        yesProb = ((double) hamYes / (double) (spamYes + hamNo));
-        noProb = ((double) hamNo / (double) (hamYes + hamNo));
-        double hamGini = 1 - (yesProb * yesProb) - (noProb * noProb);
-        
-        // calculate the weighted average of the two gini impurities
-        double total = spamYes + spamNo + hamYes + hamNo;
-        if (total != 0) {
-            totalImpurity = ((spamYes + spamNo) / total) * spamGini + ((hamYes + hamNo) / total) * hamGini;
-            return totalImpurity;
+        double giniYes = 1.0;
+        if (totalYes > 0) {
+            double spamYesProb = (double) spamYes / totalYes;
+            double hamYesProb = (double) hamYes / totalYes;
+            giniYes = 1 - (spamYesProb * spamYesProb + hamYesProb * hamYesProb);
         }
-        return 0.0;
+
+        double giniNo = 1.0;
+        if (totalNo > 0) {
+            double spamNoProb = (double) spamNo / totalNo;
+            double hamNoProb = (double) hamNo / totalNo;
+            giniNo = 1 - (spamNoProb * spamNoProb + hamNoProb * hamNoProb);
+        }
+
+        double total = totalYes + totalNo;
+        totalImpurity = ((double) totalYes / total) * giniYes + ((double) totalNo / total) * giniNo;
+
+        return totalImpurity;
     }
 }
