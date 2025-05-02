@@ -1,4 +1,7 @@
 package tabular;
+/*
+ * Author: Shelby Dussintyl and Madeline Chandler
+ */
 
 import java.util.*;
 

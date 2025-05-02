@@ -1,9 +1,6 @@
 /*
- * Author:
- * Date:
- * Purpose:
- * Note: ngl I just copied the main file from hw 4 and I'll
- * just edit it later once we finish the rest of the files
+ * Author: Madeline Chandler
+ * Date: 5/1/2025
  */
 
 import java.util.ArrayList;
