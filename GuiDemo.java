@@ -9,6 +9,6 @@ import gui.*;
 public class GuiDemo {
     public static void main(String[] args) {
         MainFrame frame = new MainFrame();
-        frame.initialize();
+        // frame.initialize();
     }
 }

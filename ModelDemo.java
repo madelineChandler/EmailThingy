@@ -12,8 +12,7 @@ import gui.*;
 
 public class ModelDemo {
     public static void main(String[] args) {
-      // MainFrame frame = new MainFrame();
-      // frame.initialize(); // initializes gui
+      MainFrame frame = new MainFrame();
       
       String fileName = "spam_or_not_spam.csv";
       DataSet ds = new DataSet(fileName);
@@ -26,5 +25,7 @@ public class ModelDemo {
       model.trainModel();
       System.out.println("Training complete.");
       System.out.println("Accuracy: " + model.predict());
+
+      frame.initialize(model); // initializes gui
     }
 }
