@@ -1,9 +1,4 @@
 package tabular;
-/*
- * Author:
- * Date:
- * Purpose:
- */
 
 import java.util.*;
 
@@ -14,9 +9,8 @@ public class Model {
     private DataSet dataSet;
     private ArrayList<DataRow> trainingData;
     private ArrayList<DataRow> testingData;
-    private Node headNode = new Node(); // head node for classification tree
+    private Node headNode = new Node(); // root node
 
-    // initialize the model object
     public Model(DataSet ds) {
         this.dataSet = ds;
         this.trainingData = ds.getTrainingData();
@@ -55,56 +49,51 @@ public class Model {
             }
         }
 
-        // Combine and sort lengths
+        // Feature: length
         ArrayList<Integer> allLengths = new ArrayList<>(spam.getAllLengths());
         allLengths.addAll(ham.getAllLengths());
         Collections.sort(allLengths);
         Node lengthNode = calculateImpurities("length", allLengths);
 
-        // Combine and sort all avg word lengths
-        ArrayList<Integer> allAvgWord = new ArrayList<>(spam.allAvgWordLengths());
-        allAvgWord.addAll(ham.allAvgWordLengths());
+        // average word length
+        ArrayList<Integer> allAvgWord = new ArrayList<>(spam.getAllAvgWordLengths());
+        allAvgWord.addAll(ham.getAllAvgWordLengths());
         Collections.sort(allAvgWord);
         Node awlNode = calculateImpurities("avgWordLength", allAvgWord);
 
-        // Determine head node based on lower impurity
-        if (lengthNode.getImpurity() < awlNode.getImpurity()) {
-            headNode = lengthNode;
+        //  uppercase and lowercase
+        ArrayList<Integer> upperCounts = new ArrayList<>();
+        ArrayList<Integer> lowerCounts = new ArrayList<>();
+        LetterCounter counter = new LetterCounter();
 
-            Node left = new Node();
-            left.setFeature("avgWordLength");
-            left.setThreshold(awlNode.getThreshold());
-            Node leftLeft = new Node();
-            leftLeft.setClassification("ham");
-            Node leftRight = new Node();
-            leftRight.setClassification("spam");
-            left.setLeft(leftLeft);
-            left.setRight(leftRight);
-
-            headNode.setLeft(left);
-
-            Node rightLeaf = new Node();
-            rightLeaf.setClassification("spam");
-            headNode.setRight(rightLeaf);
-        } else {
-            headNode = awlNode;
-
-            Node left = new Node();
-            left.setFeature("length");
-            left.setThreshold(lengthNode.getThreshold());
-            Node leftLeft = new Node();
-            leftLeft.setClassification("ham");
-            Node leftRight = new Node();
-            leftRight.setClassification("spam");
-            left.setLeft(leftLeft);
-            left.setRight(leftRight);
-
-            headNode.setLeft(left);
-
-            Node rightLeaf = new Node();
-            rightLeaf.setClassification("spam");
-            headNode.setRight(rightLeaf);
+        for (DataRow row : trainingData) {
+            counter.reset();
+            counter.countLetters(row.getEmail());
+            upperCounts.add(counter.getUppercaseCount());
+            lowerCounts.add(counter.getLowercaseCount());
         }
+
+        Collections.sort(upperCounts);
+        Collections.sort(lowerCounts);
+
+        Node upperNode = calculateImpurities("uppercase", upperCounts);
+        Node lowerNode = calculateImpurities("lowercase", lowerCounts);
+
+        // Choose best node
+        Node bestNode = lengthNode;
+        for (Node node : Arrays.asList(awlNode, upperNode, lowerNode)) {
+            if (node.getImpurity() < bestNode.getImpurity()) {
+                bestNode = node;
+            }
+        }
+
+        headNode = bestNode;
+        Node leftLeaf = new Node();
+        leftLeaf.setClassification("ham");
+        Node rightLeaf = new Node();
+        rightLeaf.setClassification("spam");
+        headNode.setLeft(leftLeaf);
+        headNode.setRight(rightLeaf);
     }
 
     public double predict() {
@@ -114,46 +103,57 @@ public class Model {
         for (DataRow row : testingData) {
             int prediction = predict(row.getEmail());
 
-            if (prediction == (row.getX())) {
+            if (prediction == row.getClassification()) { // Fix method reference
                 correct++;
             }
             totalPredicted++;
         }
 
-        return (double) correct / (double) totalPredicted;
+        return (double) correct / totalPredicted;
     }
 
     public int predict(String email) {
         Node currentNode = headNode;
-        String classification;
 
         while (!currentNode.isLeaf()) {
-            if (currentNode.getFeature().equals("length")) {
-                if (email.length() < currentNode.getThreshold()) {
-                    currentNode = currentNode.getLeft();
-                } else {
-                    currentNode = currentNode.getRight();
-                }
-            } else if (currentNode.getFeature().equals("avgWordLength")) {
-                double avgWordLength = (double) email.length() / email.split("\\s+").length;
-                if (avgWordLength < currentNode.getThreshold()) {
-                    currentNode = currentNode.getLeft();
-                } else {
-                    currentNode = currentNode.getRight();
-                }
+            String feature = currentNode.getFeature();
+            int threshold = currentNode.getThreshold();
+
+            switch (feature) {
+                case "length":
+                    currentNode = email.length() < threshold ? currentNode.getLeft() : currentNode.getRight();
+                    break;
+                case "avgWordLength":
+                    double avgWordLength = (double) email.length() / email.split("\\s+").length;
+                    currentNode = avgWordLength < threshold ? currentNode.getLeft() : currentNode.getRight();
+                    break;
+                case "uppercase":
+                    LetterCounter upperCounter = new LetterCounter();
+                    upperCounter.countLetters(email);
+                    currentNode = upperCounter.getUppercaseCount() < threshold ? currentNode.getLeft() : currentNode.getRight();
+                    break;
+                case "lowercase":
+                    LetterCounter lowerCounter = new LetterCounter();
+                    lowerCounter.countLetters(email);
+                    currentNode = lowerCounter.getLowercaseCount() < threshold ? currentNode.getLeft() : currentNode.getRight();
+                    break;
+                default:
+                    return 0;
             }
         }
 
-        classification = currentNode.getClassification();
-        return classification.equals("spam") ? 1 : 0;
+        return currentNode.getClassification().equals("spam") ? 1 : 0;
     }
 
     private double giniImpurity(double val, String property) {
         int spamYes = 0, spamNo = 0, hamYes = 0, hamNo = 0;
-        double totalImpurity;
 
-        ArrayList<Integer> spamPoo = property.equals("length") ? spam.getAllLengths() : spam.allAvgWordLengths();
-        ArrayList<Integer> hamPoo = property.equals("length") ? ham.getAllLengths() : ham.allAvgWordLengths();
+        ArrayList<Integer> spamPoo = property.equals("length") ? spam.getAllLengths() :
+                property.equals("avgWordLength") ? spam.getAllAvgWordLengths() :
+                        getLetterCounts(spam, property);
+        ArrayList<Integer> hamPoo = property.equals("length") ? ham.getAllLengths() :
+                property.equals("avgWordLength") ? ham.getAllAvgWordLengths() :
+                        getLetterCounts(ham, property);
 
         for (int i : spamPoo) {
             if (i < val) spamYes++;
@@ -182,9 +182,21 @@ public class Model {
             giniNo = 1 - (spamNoProb * spamNoProb + hamNoProb * hamNoProb);
         }
 
-        double total = totalYes + totalNo;
-        totalImpurity = ((double) totalYes / total) * giniYes + ((double) totalNo / total) * giniNo;
+        return ((double) totalYes / (totalYes + totalNo)) * giniYes +
+                ((double) totalNo / (totalYes + totalNo)) * giniNo;
+    }
 
-        return totalImpurity;
+    private ArrayList<Integer> getLetterCounts(FeatureProcessor processor, String type) {
+        ArrayList<String> emails = processor.getEmails(); // Ensure this method exists in FeatureProcessor
+        ArrayList<Integer> counts = new ArrayList<>();
+        LetterCounter counter = new LetterCounter();
+
+        for (String email : emails) {
+            counter.reset();
+            counter.countLetters(email);
+            counts.add(type.equals("uppercase") ? counter.getUppercaseCount() : counter.getLowercaseCount());
+        }
+
+        return counts;
     }
 }
