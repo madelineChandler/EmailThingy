@@ -19,11 +19,11 @@ public class Model {
 
     private Node calculateImpurities(String property, List<Integer> values) {
         double lowestImpurity = Double.MAX_VALUE;
-        int bestThreshold = 0;
+        double bestThreshold = 0.0;
         Node daNode = new Node();
 
         for (int i = 1; i < values.size(); i++) {
-            int threshold = (values.get(i - 1) + values.get(i)) / 2;
+            double threshold = (values.get(i - 1) + values.get(i)) / 2.0; // avg of two adjacent values
             double impurity = giniImpurity(threshold, property);
 
             if (impurity < lowestImpurity) {
@@ -55,15 +55,16 @@ public class Model {
         Collections.sort(allLengths);
         Node lengthNode = calculateImpurities("length", allLengths);
 
-        // average word length
+        // Feature: average word length
         ArrayList<Integer> allAvgWord = new ArrayList<>(spam.getAllAvgWordLengths());
         allAvgWord.addAll(ham.getAllAvgWordLengths());
         Collections.sort(allAvgWord);
         Node awlNode = calculateImpurities("avgWordLength", allAvgWord);
 
-        //  uppercase and lowercase
+        // Features: uppercase and lowercase counts
         ArrayList<Integer> upperCounts = new ArrayList<>();
         ArrayList<Integer> lowerCounts = new ArrayList<>();
+
         LetterCounter counter = new LetterCounter();
 
         for (DataRow row : trainingData) {
@@ -79,21 +80,44 @@ public class Model {
         Node upperNode = calculateImpurities("uppercase", upperCounts);
         Node lowerNode = calculateImpurities("lowercase", lowerCounts);
 
-        // Choose best node
+        // Choose the best node
         Node bestNode = lengthNode;
-        for (Node node : Arrays.asList(awlNode, upperNode, lowerNode)) {
-            if (node.getImpurity() < bestNode.getImpurity()) {
-                bestNode = node;
-            }
+        Node nextBestNode = lengthNode;
+        Node thirdBestNode = lengthNode;
+        Node[] nodes = {awlNode, upperNode, lowerNode, lengthNode};
+        int i = 0;
+        for (; i < nodes.length; i++) {
+            if (nodes[i].getImpurity() < bestNode.getImpurity())
+                bestNode = nodes[i];
+        }
+        for (i = 0; i < nodes.length; i++) {
+            if (nodes[i].getImpurity() < nextBestNode.getImpurity() && nodes[i] != bestNode)
+                nextBestNode = nodes[i];
+        }
+        for (i = 0; i < nodes.length; i++) {
+            if (nodes[i].getImpurity() < thirdBestNode.getImpurity() && nodes[i] != bestNode &&
+            nodes[i] != nextBestNode)
+                thirdBestNode = nodes[i];
         }
 
         headNode = bestNode;
-        Node leftLeaf = new Node();
-        leftLeaf.setClassification("ham");
+        headNode.setLeft(nextBestNode);
         Node rightLeaf = new Node();
         rightLeaf.setClassification("spam");
-        headNode.setLeft(leftLeaf);
         headNode.setRight(rightLeaf);
+
+        thirdBestNode.setClassification("ham");
+        nextBestNode.setLeft(thirdBestNode);
+        Node rightLeaf2 = new Node();
+        rightLeaf2.setClassification("spam");
+        nextBestNode.setRight(rightLeaf2);
+
+        Node leftLeaf = new Node();
+        leftLeaf.setClassification("ham");
+        thirdBestNode.setLeft(leftLeaf);
+        Node rightLeaf3 = new Node();
+        rightLeaf3.setClassification("spam");
+        thirdBestNode.setRight(rightLeaf3);
     }
 
     public double predict() {
@@ -103,7 +127,7 @@ public class Model {
         for (DataRow row : testingData) {
             int prediction = predict(row.getEmail());
 
-            if (prediction == row.getClassification()) { // Fix method reference
+            if (prediction == row.getX()) { // Fixed method reference
                 correct++;
             }
             totalPredicted++;
@@ -117,7 +141,7 @@ public class Model {
 
         while (!currentNode.isLeaf()) {
             String feature = currentNode.getFeature();
-            int threshold = currentNode.getThreshold();
+            double threshold = currentNode.getThreshold();
 
             switch (feature) {
                 case "length":

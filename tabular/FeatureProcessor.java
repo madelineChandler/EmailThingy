@@ -55,7 +55,7 @@ public class FeatureProcessor {
         }
 
         Collections.sort(allLengths);
-        updateWordList(Arrays.asList(words));
+        // updateWordList(Arrays.asList(words));
     }
 
     // Get processed email contents

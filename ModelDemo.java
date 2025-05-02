@@ -22,6 +22,7 @@ public class ModelDemo {
       System.out.println("Training Data: " + ds.getTrainingData().size());
       System.out.println("Testing Data: " + ds.getTestingData().size());
       System.out.println("------------------------");
+      System.out.println("Training Model... this may take about a minute.");
       model.trainModel();
       System.out.println("Training complete.");
       System.out.println("Accuracy: " + model.predict());
