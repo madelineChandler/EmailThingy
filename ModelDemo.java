@@ -17,21 +17,14 @@ public class ModelDemo {
       
       String fileName = "spam_or_not_spam.csv";
       DataSet ds = new DataSet(fileName);
-      
-      System.out.println("Trained Model: ");
-      System.out.println("Model Error: ");
-      ArrayList<DataRow> rows = ds.getRows();
-      if(rows == null) {
-          System.out.println("Data Set has no rows. stopping!");
-          System.exit(10);
-      }
-      System.out.println("prediction, actual, error");
-      for(DataRow row : rows) {
-        System.out.println("");
-        System.out.print(",");
-        System.out.print(row.getDependentVariable());
-        System.out.print(",");
-        System.out.println(row.getDependentVariable());
-      }
+      Model model = new Model(ds);
+
+      System.out.println("Dataset: " + fileName);
+      System.out.println("Training Data: " + ds.getTrainingData().size());
+      System.out.println("Testing Data: " + ds.getTestingData().size());
+      System.out.println("------------------------");
+      model.trainModel();
+      System.out.println("Training complete.");
+      System.out.println("Accuracy: " + model.predict());
     }
 }

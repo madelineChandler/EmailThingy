@@ -1,0 +1,31 @@
+@startuml "Email Sorter"
+
+
+class DataRow {
+    -y : double
+    -x : double[]
+    #DataRow(double y, double[] x)
+    +double getDependentVars()
+    +double[] getIndependentVars()
+}
+
+class DataSet {
+    -data : ArrayList<DataRow>
+    #DataSet(String filename)
+    +ArrayList<DataRow> getRows()
+}
+
+class gui.FeatureProcessor {
+    -top_ten : String[]
+    -emailCount : int
+    -totalWordLength : int
+    +int getAvgLength()
+}
+
+class Model {
+    -ham : gui.FeatureProcessor
+    -spam : gui.FeatureProcessor
+    -trainingData : DataSet
+}
+
+@enduml

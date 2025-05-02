@@ -37,5 +37,9 @@ public class DataRow {
         return "spam";
     }
 
+    public int getX() {
+        return x;
+    }
+
 
 }

@@ -1,11 +1,9 @@
 package tabular;
 /*
- * Author:
+ * Author: Madeline Chandler
  * Date: 4/29/2025
  * Purpose:  node.
  * This class is used to represent a node in the decision tree.
- * It is used to store the feature and the threshold (likely-hood to ... i forget, i'm eepy) for the node.
- * note: <ArrayList>Node will be used in the Model class to store the model tree.
  */
 
 public class Node {
@@ -13,6 +11,8 @@ public class Node {
     private double threshold;
     private Node left;
     private Node right;
+    private double impurity = 1.0;
+    private String classification = null;
 
     public Node() {
         this.feature = null;
@@ -28,12 +28,33 @@ public class Node {
         this.right = null;
     }
 
+    public Node predict(String email) {
+        if (this.feature.equals("length")) {
+            if (email.length() < this.threshold)
+                return left;
+            return right;
+        } else if (this.feature.equals("avgWordLength")) {
+            if (email.length() < this.threshold)
+                return left;
+            return right;
+        }
+        return null;
+    }
+
     public String getFeature() {
         return feature;
     }
 
     public double getThreshold() {
         return threshold;
+    }
+
+    public double getImpurity() {
+        return impurity;
+    }
+
+    public String getClassification() {
+        return this.classification;
     }
 
     public Node getLeft() {
@@ -49,11 +70,33 @@ public class Node {
         return (left==null && right==null);
     }
 
+    public void setFeature(String feature) {
+        this.feature = feature;
+    }
+
+    public void setThreshold(double threshold) {
+        this.threshold = threshold;
+    }
+
+    public void setImpurity(double impurity) {
+        this.impurity = impurity;
+    }
+
+    public void setClassification(String classification) {
+        this.classification = classification;
+    }
+
     public void setLeft(Node left) {
         this.left = left;
     }
 
     public void setRight(Node right) {
         this.right = right;
+    }
+
+    public String toString() {
+        if (feature.equalsIgnoreCase("length"))
+            return "if " + feature + " < " + threshold;
+        return "empty";
     }
 }
